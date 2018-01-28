@@ -1,0 +1,416 @@
+---
+title: "Mcap_Acute_Exposure"
+author: "HM Putnam"
+date: "January 27, 2018"
+output: html_document
+---
+
+## Load packages and set options
+```{r setup, include=FALSE}
+#R Version: R version 3.4.3
+#RStudio Version: 1.1.419
+######Read in required libraries#####
+library(car) #version 2.1-4 Date: 2016-11-30 Depends: R (>= 3.2.0) Imports:MASS, mgcv, nnet, pbkrtest (>= 0.3-2), quantreg, grDevices, utils, stats, graphics, Rcpp
+library(ggplot2) #version 2.2.1 Date/Publication: 2016-12-30 Depends: R (>= 3.1) Imports: digest, grid, gtable (>= 0.1.1), MASS, plyr (>= 1.7.1),reshape2, scales (>= 0.4.1), stats, tibble, lazyeval
+library(gridExtra) #version: 2.2.1 Date/Publication: 2016-02-29 Depends: R(>= 2.5.0) Imports: gtable, grid, grDevices, graphics, utils
+library(lsmeans)  #version: 2.26-3 Date: 2017-05-09 Depends: estimability, methods, R (>= 3.0) Imports: graphics, stats, utils, nlme, coda (>= 0.17), multcomp, plyr,mvtnorm, xtable (>= 1.8-2)
+library(multcomp) #version: 1.4-6 Date: 2016-07-14 Depends: stats, graphics, mvtnorm (>= 1.0-3), survival (>= 2.39-4), TH.data (>= 1.0-2)
+library(nlme) #version: 3.1-131 Date: 2017-02-06 Depends: R (>= 3.0.2) Imports: graphics, stats, utils, lattice
+library(plotrix) #version: 3.6-5 Date: 2017-05-09 Depends: NA Imports: grDevices, graphics, stats, utils
+library(plyr) #version: 1.8.4 Date/Publication: 2016-06-08 Depends: R (>= 3.1.0) Imports: Rcpp (>= 0.11.0)
+library(reshape) #version: 3.3.1 Date/Publication: 2016-06-24  Depends: R (>= 3.3.1)
+library(seacarb) #version: 3.2 Date/Publication: 2017-06-19 Depends: R (>= 2.10), oce, gsw Imports: NA
+library(grid) #version: 3.3.1 Date/Publication: 2016-06-24  Depends: R (>= 3.3.1)
+library(xtable) #version 1.8-2 Date/Publication: 2016-01-08 Depends: R (>= 2.10.0)
+library(lme4) #version: 1.1-13 Date/Publication: 2017-04-19 Depends: R (>= 3.0.2), Matrix (>= 1.1.1), methods, stats Imports: graphics, grid, splines, utils, parallel, MASS, lattice, nlme(>= 3.1-123), minqa (>= 1.1.15), nloptr (>= 1.0.4)
+library(blmeco) #version: 1.1 Date/Publication: 2015-08-22 Depends: R (>= 3.0.0), stats, MASS Imports: MuMIn, arm, lme4
+library(MuMIn) #version: 1.15.6 Date/Publication: 2016-01-07 Depends: R (>= 3.0.0) Imports: graphics, methods, Matrix, stats, stats4
+
+
+#####Required Data files#####
+#Light_Calibration_Data.csv
+#Temperature_Calibration_Data.csv
+#Acclimation_Data.csv
+#Tank_Light.csv
+#Tank_Temp.csv
+#Tank_NBS_pH.csv
+#~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/pH_Calibration_Files/
+#~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/TA/
+#TA_mass_data.csv
+#CRM_TA_Data.csv
+#Daily_Temp_pH_Sal.csv
+```
+
+# Coral Collection
+#####Fragments of *Montipora capitata* (one per colony) were collected on 15 June 2016 from the fringing reefs of Kaneohe Bay, Oahu, Hawaii (21.429748, -157.793024) under SAP 2017-28. They were immediately returned to the Hawaii Institute of Marine Biology where they were placed in a 1,300L common garden tank with flowing seawater (Putnam et al 2016 DOI: 10.1111/eva.12408). Coral nubbins were formed by attaching the broken skeleton to plastic frag plugs using non toxic hot glue.
+
+#Logger Calibration
+#####Light and Temperature Loggers were calibrated to ensure standardization
+```{r Calibration Information, include=FALSE}
+# Load Light and Temperature Calibration Information
+Cal.L.data <- read.csv("~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/Light_Calibration_Data.csv", header=TRUE, sep=",", na.strings="NA") #load data with a header, separated by commas, with NA as NA
+#Light Logger Calibrations
+#Tank4 Odyssey Logger Serial Number = 4806
+#Tank5 Odyssey Logger Serial Number = 4806
+#Tank6 Odyssey Logger Serial Number = 6383
+#Tank9 Odyssey Logger Serial Number = 6384
+#Tank11 Odyssey Logger Serial Number = 6376
+#Tank12 Odyssey Logger Serial Number = 6377
+#Tank13 Odyssey Logger Serial Number = 6378
+#Tank14 Odyssey Logger Serial Number = 6379
+#Tank15 Odyssey Logger Serial Number = 6380
+#Tank16 Odyssey Logger Serial Number = 6281
+
+#Convert light from counts to instantaneous PAR
+Cal.L.data$Licor.quanta <- (Cal.L.data$Licor.mol.m2*10^6)/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+#Convert light from counts to instantaneous PAR
+Cal.L.data$Licor.quanta.Tank5 <- (Cal.L.data$Licor.mol.m2.Tank5*10^6)/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+Cal.L.data$Tank4.quanta <- Cal.L.data$Tank4/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+Cal.L.data$Tank5.quanta <- Cal.L.data$Tank5_SN4806/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+Cal.L.data$Tank6.quanta <- Cal.L.data$Tank6/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+Cal.L.data$Tank9.quanta <- Cal.L.data$Tank9/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+Cal.L.data$Tank11.quanta <- Cal.L.data$Tank11/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+Cal.L.data$Tank12.quanta <- Cal.L.data$Tank12/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+Cal.L.data$Tank13.quanta <- Cal.L.data$Tank13/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+Cal.L.data$Tank14.quanta <- Cal.L.data$Tank14/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+Cal.L.data$Tank15.quanta <- Cal.L.data$Tank15/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+Cal.L.data$Tank16.quanta <- Cal.L.data$Tank16/(15*60) #convert 15 min integrated data to instantaneous µmol m-2 s-1
+#Run linear models of loggers against standard and extract model coeffecients to be applied to raw data
+L4.lm <- coef(lm(Licor.quanta ~ Tank4.quanta, data=Cal.L.data)) #extract model coefficients
+L5.lm <- coef(lm(Licor.quanta.Tank5 ~ Tank5.quanta, data=Cal.L.data)) #extract model coefficients
+L6.lm <- coef(lm(Licor.quanta ~ Tank6.quanta, data=Cal.L.data)) #extract model coefficients
+L9.lm <- coef(lm(Licor.quanta ~ Tank9.quanta, data=Cal.L.data)) #extract model coefficients
+L11.lm <- coef(lm(Licor.quanta ~ Tank11.quanta, data=Cal.L.data)) #extract model coefficients
+L12.lm <- coef(lm(Licor.quanta ~ Tank12.quanta, data=Cal.L.data)) #extract model coefficients
+L13.lm <- coef(lm(Licor.quanta ~ Tank13.quanta, data=Cal.L.data)) #extract model coefficients
+L14.lm <- coef(lm(Licor.quanta ~ Tank14.quanta, data=Cal.L.data)) #extract model coefficients
+L15.lm <- coef(lm(Licor.quanta ~ Tank15.quanta, data=Cal.L.data)) #extract model coefficients
+L16.lm <- coef(lm(Licor.quanta ~ Tank16.quanta, data=Cal.L.data)) #extract model coefficients
+
+#Temperature Logger Calibrations
+
+#Tank4 Hobo Water Temp Pro Logger Serial Number = NA
+#Tank6 Hobo Water Temp Pro Logger Serial Number = 10487935
+#Tank9 Hobo Water Temp Pro Logger Serial Number = 10779057
+#Tank11 Hobo Water Temp Pro Logger Serial Number = 10779059
+#Tank12 Hobo Water Temp Pro Logger Serial Number = 10779060
+#Tank13 Hobo Water Temp Pro Logger Serial Number = 10779061
+#Tank14 Hobo Water Temp Pro Logger Serial Number = 10779062
+#Tank15 Hobo Water Temp Pro Logger Serial Number = 10779063
+#Tank16 Hobo Water Temp Pro Logger Serial Number = 10779064
+
+Cal.T.data <- read.csv("~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/Temperature_Calibration_Data.csv", header=TRUE, sep=",", na.strings="NA") #load data with a header, separated by commas, with NA as NA
+#Run linear models of loggers against standard and extract model coeffecients to be applied to raw data
+#T4.lm <- coef(lm(SN_10779056 ~ Tank4, data=Cal.T.data)) #extract model coefficients
+T5.lm <- coef(lm(SN_10779056 ~ Tank5, data=Cal.T.data)) #extract model coefficients
+T6.lm <- coef(lm(SN_10779056 ~ Tank6, data=Cal.T.data)) #extract model coefficients
+T9.lm <- coef(lm(SN_10779056 ~ Tank9, data=Cal.T.data)) #extract model coefficients
+T11.lm <- coef(lm(SN_10779056 ~ Tank11, data=Cal.T.data)) #extract model coefficients
+T12.lm <- coef(lm(SN_10779056 ~ Tank12, data=Cal.T.data)) #extract model coefficients
+T13.lm <- coef(lm(SN_10779056 ~ Tank13, data=Cal.T.data)) #extract model coefficients
+T14.lm <- coef(lm(SN_10779056 ~ Tank14, data=Cal.T.data)) #extract model coefficients
+T15.lm <- coef(lm(SN_10779056 ~ Tank15, data=Cal.T.data)) #extract model coefficients
+T16.lm <- coef(lm(SN_10779056 ~ Tank16, data=Cal.T.data)) #extract model coefficients
+
+```
+
+# Coral Acclimation
+#####Nubbins were acclimated for 15 days under ambient enviornmetnal conditions including natural diurnal fluctuations in pH, light, and temperature (e.g., Putnam et al 2016 DOI: 10.1111/eva.12408).
+```{r Acclimation Conditions}
+Acclim.data <- read.csv("~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/Acclimation_Data.csv", header=TRUE, sep=",", na.strings="NA") #load data with a header, separated by commas, with NA as NA
+Acclim.data[Acclim.data == 0] <- NA #replace 0 with NA
+light <-(Acclim.data$Tank5.Light)/(15*60) #Assign light column in dataframe and convert to units of µmol m-2 s-1
+light <-(light*L5.lm[2])+L5.lm[1] #Apply the cross calibration of the odyssey light to Licor cosine sensor standard 192SA cosine sensor
+temp <-Acclim.data$Tank5.Temp #Assign temperature column in dataframe
+temp <-(temp*T5.lm[2])+T5.lm[1] #Apply the cross calibration of temperature to standard logger #1
+pH <- Acclim.data$Tank5.pH
+Acc <- data.frame(Acclim.data$Date.Time, light, temp, pH) #combine light and temperature data
+mydate <- strptime(Acc$Acclim.data.Date.Time, format="%m/%d/%y %H:%M") #convert date format to characters
+quarterhours <- format(as.POSIXct(mydate) ,format = "%H:%M") #set time as every 15 min
+Acc.data <- cbind(Acc, quarterhours) #make a dataframe out of data and new times
+range(na.omit(Acc.data$temp)) #view data range
+range(na.omit(Acc.data$light)) #view data range
+range(na.omit(Acc.data$pH)) #view data range
+
+#Tank Temperature Data for Acclimation Period (15 June 2016 - 29 June 2016)
+quarterly.temp.mean <- aggregate(temp ~ quarterhours, data=Acc.data, mean, na.rm=TRUE) #calculate mean of temperature for every 15 min interval
+quarterly.temp.se <- aggregate(temp ~ quarterhours, data=Acc.data, std.error, na.rm=TRUE) #calculate standard error of the mean of temperature for every 15 min interval
+Acc.temp.N <- sum(!is.na(Acc.data$temp)) #Count sample size without NA values
+Acc.temp.N #View data
+temp.means <- data.frame(quarterly.temp.mean, quarterly.temp.se$temp) #combine mean and standard error results
+colnames(temp.means) <- c("Time", "mean", "se")  #rename columns to describe contents
+range(na.omit(temp.means$mean)) #range of average temp levels
+mean(na.omit(Acc.data$temp))
+
+#Tank Light Data for Acclimation Period (15 June 2016 - 29 June 2016)
+quarterly.light.mean <- aggregate(light ~ quarterhours, data=Acc.data, mean, na.rm=TRUE) #calculate mean of lighterature for every 15 min interval
+quarterly.light.mean <- rbind(c("06:00","0"), quarterly.light.mean) #combine rows
+quarterly.light.se <- aggregate(light ~ quarterhours, data=Acc.data, std.error, na.rm=TRUE) #calculate standard error of the mean of lighterature for every 15 min interval
+quarterly.light.se <- rbind(c("06:00","0"), quarterly.light.se) #combine rows
+Acc.light.N <- sum(!is.na(Acc.data$light)) #Count sample size without NA values
+Acc.light.N #View data
+light.means <- data.frame(quarterly.light.mean, quarterly.light.se$light) #combine mean and standard error results
+light.means[light.means  == 0] <- NA
+colnames(light.means) <- c("Time", "mean", "se")  #rename columns to describe contents
+light.means$mean <- as.numeric(light.means$mean)
+light.means$se <- as.numeric(light.means$se)
+range(na.omit(light.means$mean)) #range of average light levels
+mean(na.omit(Acc.data$light))
+
+#Tank NBS pH Data for Acclimation Period (15 June 2016 - 29 June 2016)
+quarterly.pH.mean <- aggregate(pH ~ quarterhours, data=Acc.data, mean, na.rm=TRUE) #calculate mean of pHerature for every 15 min interval
+quarterly.pH.se <- aggregate(pH ~ quarterhours, data=Acc.data, std.error, na.rm=TRUE) #calculate standard error of the mean of pHerature for every 15 min interval
+Acc.pH.N <- sum(!is.na(Acc.data$pH)) #Count sample size without NA values
+Acc.pH.N #View data
+pH.means <- data.frame(quarterly.pH.mean, quarterly.pH.se$pH) #combine mean and standard error results
+colnames(pH.means) <- c("Time", "mean", "se")  #rename columns to describe contents
+range(na.omit(pH.means$mean)) #range of average pH levels
+mean(na.omit(Acc.data$pH))
+
+
+Fig.Acc.Temp <- ggplot(temp.means) + #Plot average diurnal cycle of temperature data
+  geom_point(aes(x = Time, y = mean), colour="black", cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_errorbar(aes(x=Time, ymax=mean+se, ymin=mean-se), position=position_dodge(0.9), data=temp.means, col="black", width=0) + #set values for standard error bars and offset on the X axis for clarity
+  scale_x_discrete(breaks=c("01:00", "06:00", "12:00", "18:00", "23:00")) + #set discrete breaks on the X axis
+  ggtitle("A) TEMPERATURE") + #Label the graph with the main title
+  ylim(25,28) + #Set Y axis limits
+  xlab("Time") + #Label the X Axis
+  ylab("Temperature (°C)") + #Label the Y Axis
+  theme_bw() + #Set the background color
+  theme(axis.line = element_line(color = 'black'), #Set the axes color
+        axis.ticks.length=unit(-0.2, "cm"), #turn ticks inward
+        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), #set margins on labels
+        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), angle = 90, vjust = 0.5, hjust=1), #set margins on labels
+        panel.grid.major = element_blank(), #Set the major gridlines
+        panel.grid.minor = element_blank(), #Set the minor gridlines
+        plot.background=element_blank(), #Set the plot background
+        panel.border=element_rect(size=1.25, fill = NA), #set outer border
+        plot.title=element_text(hjust=0)) #Justify the title to the top left
+
+Fig.Acc.Light <- ggplot(light.means) + #Plot average diurnal cycle of light data
+  geom_point(aes(x = Time, y = mean), colour="black", cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_errorbar(aes(x=Time, ymax=mean+se, ymin=mean-se), position=position_dodge(0.9), data=light.means, col="black", width=0) + #set values for standard error bars and offset on the X axis for clarity
+  scale_x_discrete(breaks=c("01:00", "06:00", "12:00", "18:00", "23:00")) + #set discrete breaks on the X axis
+  ggtitle("B) LIGHT") + #Label the graph with the main title
+  ylim(0,500) + #Set Y axis limits
+  xlab("Time") + #Label the X Axis
+  ylab(bquote('Irradiance ('*mu~'mol' ~ m^-2~s^-1*')')) + #Label the Y Axis
+  theme_bw() + #Set the background color
+  theme(axis.line = element_line(color = 'black'), #Set the axes color
+        axis.ticks.length=unit(-0.2, "cm"), #turn ticks inward
+        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), #set margins on labels
+        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), angle = 90, vjust = 0.5, hjust=1), #set margins on labels
+        panel.grid.major = element_blank(), #Set the major gridlines
+        panel.grid.minor = element_blank(), #Set the minor gridlines
+        plot.background=element_blank(), #Set the plot background
+        panel.border=element_rect(size=1.25, fill = NA), #set outer border
+        plot.title=element_text(hjust=0)) #Justify the title to the top left
+
+
+Fig.Acc.pH <- ggplot(pH.means) + #Plot average diurnal cycle of temperature data
+  geom_point(aes(x = Time, y = mean), colour="black", cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_errorbar(aes(x=Time, ymax=mean+se, ymin=mean-se), position=position_dodge(0.9), data=pH.means, col="black", width=0) + #set values for standard error bars and offset on the X axis for clarity
+  scale_x_discrete(breaks=c("01:00", "06:00", "12:00", "18:00", "23:00")) + #set discrete breaks on the X axis
+  ggtitle("C) pH") + #Label the graph with the main title
+  ylim(7.8,8.2) + #Set Y axis limits
+  xlab("Time") + #Label the X Axis
+  ylab("pH (NBS)") + #Label the Y Axis
+  theme_bw() + #Set the background color
+  theme(axis.line = element_line(color = 'black'), #Set the axes color
+        axis.ticks.length=unit(-0.2, "cm"), #turn ticks inward
+        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), #set margins on labels
+        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), angle = 90, vjust = 0.5, hjust=1), #set margins on labels
+        panel.grid.major = element_blank(), #Set the major gridlines
+        panel.grid.minor = element_blank(), #Set the minor gridlines
+        plot.background=element_blank(), #Set the plot background
+        panel.border=element_rect(size=1.25, fill = NA), #set outer border
+        plot.title=element_text(hjust=0)) #Justify the title to the top left
+```
+
+# Coral Exposure
+#####Three treatments conditions were created to look at the individual effects of increased temperature and pCO~2~ on coral response. These included Ambient Temperature, Ambient CO~2~ (ATAC), Ambient Temperature, High CO~2~  (ATHC), and High Temperature, Ambient CO~2~  (HTAC). Each treatment was replicated in three tanks, with 6 replicate nubbins in each tank (one per original collection colony) for the experimental time series. Nubbins were collected at 06:30 on 30 June 2016 for Time0, 07:30 for 1 hour of exposure, and 12:30 for six hours of exposure.
+```{r Exposure Conditions}
+#Tank Temperature Data for Adult Exposure Experimental Period (30 June 16)
+tank.temp.data <- read.csv("~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/20160630_Tank_Temp_Data.csv", header=TRUE, sep=",", na.strings="NA", skip=1) #load data with a header, separated by commas, with NA as NA
+mydate.tanks <- strptime(tank.temp.data$Date.Time, format="%m/%d/%y %H:%M") #convert date format to characters
+
+#tank.temp.data$Tank4.cal <-(tank.temp.data$Tank4*T4.lm[2])+T4.lm[1] #Apply the cross calibration of temperature to standard logger
+tank.temp.data$Tank6.cal <-(tank.temp.data$Tank6*T6.lm[2])+T6.lm[1] #Apply the cross calibration of temperature to standard logger 
+tank.temp.data$Tank9.cal <-(tank.temp.data$Tank9*T9.lm[2])+T9.lm[1] #Apply the cross calibration of temperature to standard logger
+tank.temp.data$Tank11.cal <-(tank.temp.data$Tank11*T11.lm[2])+T11.lm[1] #Apply the cross calibration of temperature to standard logger 
+tank.temp.data$Tank12.cal <-(tank.temp.data$Tank12*T12.lm[2])+T12.lm[1] #Apply the cross calibration of temperature to standard logger 
+tank.temp.data$Tank13.cal <-(tank.temp.data$Tank13*T13.lm[2])+T13.lm[1] #Apply the cross calibration of temperature to standard logger 
+tank.temp.data$Tank14.cal <-(tank.temp.data$Tank14*T14.lm[2])+T14.lm[1] #Apply the cross calibration of temperature to standard logger 
+tank.temp.data$Tank15.cal <-(tank.temp.data$Tank15*T15.lm[2])+T15.lm[1] #Apply the cross calibration of temperature to standard logger 
+tank.temp.data$Tank16.cal <-(tank.temp.data$Tank16*T16.lm[2])+T16.lm[1] #Apply the cross calibration of temperature to standard logger 
+
+tank.tempdata <-data.frame(mydate.tanks, tank.temp.data$Tank6.cal, tank.temp.data$Tank9.cal, tank.temp.data$Tank11.cal, tank.temp.data$Tank12.cal, tank.temp.data$Tank13.cal, tank.temp.data$Tank14.cal, tank.temp.data$Tank15.cal, tank.temp.data$Tank16.cal, tank.temp.data$T1, tank.temp.data$T6) #make a dataframe of temperature and time
+colnames(tank.tempdata) <- c("Date.Time", "Tank6", "Tank9", "Tank11", "Tank12", "Tank13", "Tank14", "Tank15", "Tank16")
+
+#One Hour Exposure Means by Treatment
+HTAC.temp.mean.T1 <- mean(na.omit(tank.tempdata$Tank6[1:5], tank.tempdata$Tank9[1:5])) #range of average ambient temp levels
+HTAC.temp.mean.T1
+ATAC.temp.mean.T1 <- mean(na.omit(tank.tempdata$Tank11[1:5], tank.tempdata$Tank14[1:5], tank.tempdata$Tank15[1:5])) #range of average ambient temp levels
+ATAC.temp.mean.T1 
+ATHC.temp.mean.T1 <- mean(na.omit(tank.tempdata$Tank12[1:5], tank.tempdata$Tank13[1:5], tank.tempdata$Tank16[1:5])) #range of average ambient temp levels
+ATHC.temp.mean.T1
+
+#Six Hour Exposure Means
+HTAC.temp.mean.T6 <- mean(na.omit(tank.tempdata$Tank6, tank.tempdata$Tank9)) #range of average ambient temp levels
+HTAC.temp.mean.T6
+ATAC.temp.mean.T6 <- mean(na.omit(tank.tempdata$Tank11, tank.tempdata$Tank14, tank.tempdata$Tank15)) #range of average ambient temp levels
+ATAC.temp.mean.T6
+ATHC.temp.mean.T6 <- mean(na.omit(tank.tempdata$Tank12, tank.tempdata$Tank13, tank.tempdata$Tank16)) #range of average ambient temp levels
+ATHC.temp.mean.T6 
+
+#Tank Light Data for Adult Exposure Experimental Period (30 June 16)
+tank.light.data <- read.csv("~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/20160630_Tank_Light_Data.csv", header=TRUE, sep=",", na.strings="NA", skip=1) #load data with a header, separated by commas, with NA as NA
+mydate.tanks <- strptime(tank.light.data$Date.Time, format="%m/%d/%y %H:%M") #convert date format to characters
+
+tank.light.data$Tank4.cal <-((tank.light.data$Tank4/(15*60))*L5.lm[2])+L5.lm[1] #Apply the cross calibration of light to standard logger
+tank.light.data$Tank6.cal <-((tank.light.data$Tank6/(15*60))*L6.lm[2])+L6.lm[1] #Apply the cross calibration of light to standard logger 
+tank.light.data$Tank9.cal <-((tank.light.data$Tank9/(15*60))*L9.lm[2])+L9.lm[1] #Apply the cross calibration of lightto standard logger
+tank.light.data$Tank11.cal <-((tank.light.data$Tank11/(15*60))*L11.lm[2])+L11.lm[1] #Apply the cross calibration of light to standard logger 
+tank.light.data$Tank12.cal <-((tank.light.data$Tank12/(15*60))*T12.lm[2])+T12.lm[1] #Apply the cross calibration of light to standard logger 
+tank.light.data$Tank13.cal <-((tank.light.data$Tank13/(15*60))*L13.lm[2])+L13.lm[1] #Apply the cross calibration of light to standard logger 
+tank.light.data$Tank14.cal <-((tank.light.data$Tank14/(15*60))*L14.lm[2])+L14.lm[1] #Apply the cross calibration of light to standard logger 
+tank.light.data$Tank15.cal <-((tank.light.data$Tank15/(15*60))*L15.lm[2])+L15.lm[1] #Apply the cross calibration of light to standard logger 
+tank.light.data$Tank16.cal <-((tank.light.data$Tank16/(15*60))*L16.lm[2])+L16.lm[1] #Apply the cross calibration of light to standard logger 
+
+tank.lightdata <-data.frame(mydate.tanks, tank.light.data$Tank4.cal, tank.light.data$Tank6.cal, tank.light.data$Tank9.cal, tank.light.data$Tank11.cal, tank.light.data$Tank12.cal, tank.light.data$Tank13.cal, tank.light.data$Tank14.cal, tank.light.data$Tank15.cal, tank.light.data$Tank16.cal, tank.light.data$T1, tank.light.data$T6) #make a dataframe of lighterature and time
+colnames(tank.lightdata) <- c("Date.Time", "Tank4", "Tank6", "Tank9", "Tank11", "Tank12", "Tank13", "Tank14", "Tank15", "Tank16")
+
+#One Hour Exposure Means by Treatment
+HTAC.light.mean.T1 <- mean(na.omit(tank.lightdata$Tank4[1:5],tank.lightdata$Tank6[1:5], tank.lightdata$Tank9[1:5])) #range of average ambient light levels
+HTAC.light.mean.T1
+ATAC.light.mean.T1 <- mean(na.omit(tank.lightdata$Tank11[1:5], tank.lightdata$Tank14[1:5], tank.lightdata$Tank15[1:5])) #range of average ambient light levels
+ATAC.light.mean.T1 
+ATHC.light.mean.T1 <- mean(na.omit(tank.lightdata$Tank12[1:5], tank.lightdata$Tank13[1:5], tank.lightdata$Tank16[1:5])) #range of average ambient light levels
+ATHC.light.mean.T1
+
+#Six Hour Exposure Means
+HTAC.light.mean.T6 <- mean(na.omit(tank.lightdata$Tank6, tank.lightdata$Tank9)) #range of average ambient light levels
+HTAC.light.mean.T6
+ATAC.light.mean.T6 <- mean(na.omit(tank.lightdata$Tank11, tank.lightdata$Tank14, tank.lightdata$Tank15)) #range of average ambient light levels
+ATAC.light.mean.T6
+ATHC.light.mean.T6 <- mean(na.omit(tank.lightdata$Tank12, tank.lightdata$Tank13, tank.lightdata$Tank16)) #range of average ambient light levels
+ATHC.light.mean.T6 
+
+#Tank pH Data for Adult Exposure Experimental Period (30 June 16)
+tank.pH.data <- read.csv("~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/20160630_Tank_pH_Data.csv", header=TRUE, sep=",", na.strings="NA", skip=1) #load data with a header, separated by commas, with NA as NA
+tank.pH.data$Date.Time <- strptime(tank.pH.data$Date.Time, format="%m/%d/%y %H:%M") #convert date format to characters
+
+#One Hour Exposure Means by Treatment
+HTAC.pH.mean.T1 <- mean(na.omit(tank.pH.data$Tank4[1:5],tank.pH.data$Tank6[1:5], tank.pH.data$Tank9[1:5])) #range of average ambient pH levels
+HTAC.pH.mean.T1
+ATAC.pH.mean.T1 <- mean(na.omit(tank.pH.data$Tank11[1:5], tank.pH.data$Tank14[1:5], tank.pH.data$Tank15[1:5])) #range of average ambient pH levels
+ATAC.pH.mean.T1 
+ATHC.pH.mean.T1 <- mean(na.omit(tank.pH.data$Tank12[1:5], tank.pH.data$Tank13[1:5], tank.pH.data$Tank16[1:5])) #range of average ambient pH levels
+ATHC.pH.mean.T1
+
+#Six Hour Exposure Means
+HTAC.pH.mean.T6 <- mean(na.omit(tank.pH.data$Tank4, tank.pH.data$Tank6, tank.pH.data$Tank9)) #range of average ambient pH levels
+HTAC.pH.mean.T6
+ATAC.pH.mean.T6 <- mean(na.omit(tank.pH.data$Tank11, tank.pH.data$Tank14, tank.pH.data$Tank15)) #range of average ambient pH levels
+ATAC.pH.mean.T6
+ATHC.pH.mean.T6 <- mean(na.omit(tank.pH.data$Tank12, tank.pH.data$Tank13, tank.pH.data$Tank16)) #range of average ambient pH levels
+ATHC.pH.mean.T6 
+
+
+#Plotting Figures
+T1s <- strptime("2016-06-30 06:30:00", "%Y-%m-%d %H:%M:%S")
+T1e <- strptime("2016-06-30 07:30:00", "%Y-%m-%d %H:%M:%S")
+T6e <- strptime("2016-06-30 12:30:00", "%Y-%m-%d %H:%M:%S")
+
+#Temperature
+Fig.Exposure.Temp <- ggplot(tank.tempdata) + #Plot average diurnal cycle of temperature data
+  geom_rect(aes(xmin = T1s, xmax= T6e, ymin=26, ymax=26.2), fill="lightgray", alpha= 0.2) + #shade exposure time
+  geom_rect(aes(xmin = T1s, xmax= T1e, ymin=26, ymax=26.2), fill="darkgray", alpha= 0.2) + #shade exposure time
+  geom_point(aes(x = Date.Time, y = Tank6), colour="red", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank9), colour="red", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank11), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank12), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank13), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank14), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank15), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank16), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  ggtitle("D) TEMPERATURE") + #Label the graph with the main title
+  ylim(26,30) + #Set Y axis limits
+  xlab("Time") + #Label the X Axis
+  ylab("Temperature (°C)") + #Label the Y Axis
+  theme_bw() + #Set the background color
+  theme(axis.line = element_line(color = 'black'), #Set the axes color
+        axis.ticks.length=unit(-0.2, "cm"), #turn ticks inward
+        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), #set margins on labels
+        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), angle = 90, vjust = 0.5, hjust=1), #set margins on labels
+        panel.grid.major = element_blank(), #Set the major gridlines
+        panel.grid.minor = element_blank(), #Set the minor gridlines
+        plot.background=element_blank(), #Set the plot background
+        panel.border=element_rect(size=1.25, fill = NA), #set outer border
+        legend.key = element_blank(), #Set plot legend key
+        plot.title=element_text(hjust=0)) #Justify the title to the top left
+
+#Light
+Fig.Exposure.Light <- ggplot(tank.lightdata) + #Plot average diurnal cycle of temperature data
+    geom_rect(aes(xmin = T1s, xmax= T6e, ymin=-10, ymax=10), fill="lightgray", alpha= 0.2) + #shade exposure time
+  geom_rect(aes(xmin = T1s, xmax= T1e, ymin=-10, ymax=10), fill="darkgray", alpha= 0.2) + #shade exposure time
+  geom_point(aes(x = Date.Time, y = Tank4), colour="pink", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank6), colour="red", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank9), colour="darkred", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank11), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank12), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank13), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank14), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank15), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank16), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  ggtitle("E) LIGHT") + #Label the graph with the main title
+  ylim(-10,600) + #Set Y axis limits
+  xlab("Time") + #Label the X Axis
+  ylab(bquote('Irradiance ('*mu~'mol' ~ m^-2~s^-1*')')) + #Label the Y Axis
+  theme_bw() + #Set the background color
+  theme(axis.line = element_line(color = 'black'), #Set the axes color
+        axis.ticks.length=unit(-0.2, "cm"), #turn ticks inward
+        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), #set margins on labels
+        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), angle = 90, vjust = 0.5, hjust=1), #set margins on labels
+        panel.grid.major = element_blank(), #Set the major gridlines
+        panel.grid.minor = element_blank(), #Set the minor gridlines
+        plot.background=element_blank(), #Set the plot background
+        panel.border=element_rect(size=1.25, fill = NA), #set outer border
+        legend.key = element_blank(), #Set plot legend key
+        plot.title=element_text(hjust=0)) #Justify the title to the top left
+
+#pH
+Fig.Exposure.pH <- ggplot(tank.pH.data) + #Plot average diurnal cycle of temperature data
+    geom_rect(aes(xmin = T1s, xmax= T6e, ymin=7.5, ymax=7.55), fill="lightgray", alpha= 0.2) + #shade exposure time
+  geom_rect(aes(xmin = T1s, xmax= T1e, ymin=7.5, ymax=7.55), fill="darkgray", alpha= 0.2) + #shade exposure time
+  #geom_point(aes(x = Date.Time, y = Tank4), colour="pink", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  #geom_point(aes(x = Date.Time, y = Tank6), colour="red", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  #geom_point(aes(x = Date.Time, y = Tank9), colour="darkred", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank11), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank12), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank13), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank14), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank15), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  geom_point(aes(x = Date.Time, y = Tank16), colour="blue", pch=16, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
+  ggtitle("F) pH") + #Label the graph with the main title
+  ylim(7.5,8.5) + #Set Y axis limits
+  xlab("Time") + #Label the X Axis
+  ylab("pH (NBS)") + #Label the Y Axis
+  theme_bw() + #Set the background color
+  theme(axis.line = element_line(color = 'black'), #Set the axes color
+        axis.ticks.length=unit(-0.2, "cm"), #turn ticks inward
+        axis.text.y = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm")), #set margins on labels
+        axis.text.x = element_text(margin=unit(c(0.5,0.5,0.5,0.5), "cm"), angle = 90, vjust = 0.5, hjust=1), #set margins on labels
+        panel.grid.major = element_blank(), #Set the major gridlines
+        panel.grid.minor = element_blank(), #Set the minor gridlines
+        plot.background=element_blank(), #Set the plot background
+        panel.border=element_rect(size=1.25, fill = NA), #set outer border
+        legend.key = element_blank(), #Set plot legend key
+        plot.title=element_text(hjust=0)) #Justify the title to the top left
+
+```
+
+# Plotting
+``` {r Plots, echo=FALSE}
+grid.arrange(arrangeGrob(Fig.Acc.Temp, Fig.Acc.Light, Fig.Acc.pH, left="ACCLIMATION", ncol=3), arrangeGrob(Fig.Exposure.Temp, Fig.Exposure.Light, Fig.Exposure.pH, left="EXPOSURE", ncol=3), ncol=1)
+```
