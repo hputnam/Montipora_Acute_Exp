@@ -2,7 +2,9 @@
 title: "Mcap_Acute_Exposure"
 author: "HM Putnam"
 date: "January 27, 2018"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ## Load packages and set options
@@ -140,7 +142,10 @@ Acc.temp.N #View data
 temp.means <- data.frame(quarterly.temp.mean, quarterly.temp.se$temp) #combine mean and standard error results
 colnames(temp.means) <- c("Time", "mean", "se")  #rename columns to describe contents
 range(na.omit(temp.means$mean)) #range of average temp levels
-mean(na.omit(Acc.data$temp))
+Acc.temp.m <- round(mean(na.omit(Acc.data$temp)), digits=2)
+Acc.temp.se <-round(sd(na.omit(Acc.data$temp))/sqrt(length(na.omit(Acc.data$temp))), digits=2)
+
+Acclimation.Temps <- cbind("Temperature", Acc.temp.m, Acc.temp.se)
 
 #Tank Light Data for Acclimation Period (15 June 2016 - 29 June 2016)
 quarterly.light.mean <- aggregate(light ~ quarterhours, data=Acc.data, mean, na.rm=TRUE) #calculate mean of lighterature for every 15 min interval
@@ -155,7 +160,10 @@ colnames(light.means) <- c("Time", "mean", "se")  #rename columns to describe co
 light.means$mean <- as.numeric(light.means$mean)
 light.means$se <- as.numeric(light.means$se)
 range(na.omit(light.means$mean)) #range of average light levels
-mean(na.omit(Acc.data$light))
+Acc.light.m <- round(mean(na.omit(Acc.data$light)), digits=1)
+Acc.light.se <-round(sd(na.omit(Acc.data$light))/sqrt(length(na.omit(Acc.data$light))), digits=1)
+
+Acclimation.light <- cbind("Light", Acc.light.m, Acc.light.se)
 
 #Tank NBS pH Data for Acclimation Period (15 June 2016 - 29 June 2016)
 quarterly.pH.mean <- aggregate(pH ~ quarterhours, data=Acc.data, mean, na.rm=TRUE) #calculate mean of pHerature for every 15 min interval
@@ -165,8 +173,14 @@ Acc.pH.N #View data
 pH.means <- data.frame(quarterly.pH.mean, quarterly.pH.se$pH) #combine mean and standard error results
 colnames(pH.means) <- c("Time", "mean", "se")  #rename columns to describe contents
 range(na.omit(pH.means$mean)) #range of average pH levels
-mean(na.omit(Acc.data$pH))
+Acc.pH.m <- round(mean(na.omit(Acc.data$pH)), digits=3)
+Acc.pH.se <-round(sd(na.omit(Acc.data$pH))/sqrt(length(na.omit(Acc.data$pH))), digits=3)
 
+Acclimation.pH <- cbind("pH", Acc.pH.m, Acc.pH.se)
+
+Acc.Table <- rbind(Acclimation.Temps,Acclimation.light,Acclimation.pH)
+colnames(Acc.Table) <- c("Parameter", "Mean", "SEM")
+write.csv(Acc.Table, "~/MyProjects/Montipora_Acute_Exp/RAnalysis/Output/Acclimation_Conditions_20160615_20160630.csv")
 
 Fig.Acc.Temp <- ggplot(temp.means) + #Plot average diurnal cycle of temperature data
   geom_point(aes(x = Time, y = mean), colour="black", cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
@@ -248,20 +262,37 @@ tank.tempdata <-data.frame(mydate.tanks, tank.temp.data$Tank6.cal, tank.temp.dat
 colnames(tank.tempdata) <- c("Date.Time", "Tank6", "Tank9", "Tank11", "Tank12", "Tank13", "Tank14", "Tank15", "Tank16")
 
 #One Hour Exposure Means by Treatment
-HTAC.temp.mean.T1 <- mean(na.omit(tank.tempdata$Tank6[1:5], tank.tempdata$Tank9[1:5])) #range of average ambient temp levels
-HTAC.temp.mean.T1
-ATAC.temp.mean.T1 <- mean(na.omit(tank.tempdata$Tank11[1:5], tank.tempdata$Tank14[1:5], tank.tempdata$Tank15[1:5])) #range of average ambient temp levels
-ATAC.temp.mean.T1 
-ATHC.temp.mean.T1 <- mean(na.omit(tank.tempdata$Tank12[1:5], tank.tempdata$Tank13[1:5], tank.tempdata$Tank16[1:5])) #range of average ambient temp levels
-ATHC.temp.mean.T1
+HTAC.temp.mean.T1 <- round(mean(na.omit(tank.tempdata$Tank6[1:5], tank.tempdata$Tank9[1:5])), digits=2) 
+HTAC.temp.se.T1 <-round(sd(na.omit(tank.tempdata$Tank6[1:5], tank.tempdata$Tank9[1:5]))/sqrt(length(na.omit(tank.tempdata$Tank6[1:5], tank.tempdata$Tank9[1:5]))), digits=2)
+
+ATAC.temp.mean.T1 <- round(mean(na.omit(tank.tempdata$Tank11[1:5], tank.tempdata$Tank14[1:5], tank.tempdata$Tank15[1:5])), digits=2) 
+ATAC.temp.se.T1 <-round(sd(na.omit(tank.tempdata$Tank11[1:5], tank.tempdata$Tank14[1:5], tank.tempdata$Tank15[1:5]))/sqrt(length(na.omit(tank.tempdata$Tank11[1:5], tank.tempdata$Tank14[1:5], tank.tempdata$Tank15[1:5]))), digits=2)
+
+ATHC.temp.mean.T1 <- round(mean(na.omit(tank.tempdata$Tank12[1:5], tank.tempdata$Tank13[1:5], tank.tempdata$Tank16[1:5])), digits=2) 
+ATHC.temp.se.T1 <-round(sd(na.omit(tank.tempdata$Tank12[1:5], tank.tempdata$Tank13[1:5], tank.tempdata$Tank16[1:5]))/sqrt(length(na.omit(tank.tempdata$Tank12[1:5], tank.tempdata$Tank13[1:5], tank.tempdata$Tank16[1:5]))), digits=2)
 
 #Six Hour Exposure Means
-HTAC.temp.mean.T6 <- mean(na.omit(tank.tempdata$Tank6, tank.tempdata$Tank9)) #range of average ambient temp levels
-HTAC.temp.mean.T6
-ATAC.temp.mean.T6 <- mean(na.omit(tank.tempdata$Tank11, tank.tempdata$Tank14, tank.tempdata$Tank15)) #range of average ambient temp levels
-ATAC.temp.mean.T6
-ATHC.temp.mean.T6 <- mean(na.omit(tank.tempdata$Tank12, tank.tempdata$Tank13, tank.tempdata$Tank16)) #range of average ambient temp levels
-ATHC.temp.mean.T6 
+HTAC.temp.mean.T6 <- round(mean(na.omit(tank.tempdata$Tank6, tank.tempdata$Tank9)), digits=2) 
+HTAC.temp.se.T6 <-round(sd(na.omit(tank.tempdata$Tank6, tank.tempdata$Tank9))/sqrt(length(na.omit(tank.tempdata$Tank6, tank.tempdata$Tank9))), digits=2)
+
+ATAC.temp.mean.T6 <- round(mean(na.omit(tank.tempdata$Tank11, tank.tempdata$Tank14, tank.tempdata$Tank15)), digits=2) 
+ATAC.temp.se.T6 <-round(sd(na.omit(tank.tempdata$Tank11, tank.tempdata$Tank14, tank.tempdata$Tank15))/sqrt(length(na.omit(tank.tempdata$Tank11, tank.tempdata$Tank14, tank.tempdata$Tank15))), digits=2)
+
+ATHC.temp.mean.T6 <- round(mean(na.omit(tank.tempdata$Tank12, tank.tempdata$Tank13, tank.tempdata$Tank16)), digits=2)
+ATHC.temp.se.T6 <-round(sd(na.omit(tank.tempdata$Tank12, tank.tempdata$Tank13, tank.tempdata$Tank16))/sqrt(length(na.omit(tank.tempdata$Tank12, tank.tempdata$Tank13, tank.tempdata$Tank16))), digits=2)
+
+Exposure.Temp.Mean.T1 <- rbind(ATAC.temp.mean.T1, ATHC.temp.mean.T1, HTAC.temp.mean.T1)
+Exposure.Temp.SE.T1 <- rbind(ATAC.temp.se.T1, ATHC.temp.se.T1, HTAC.temp.se.T1)
+Exposure.Temp.Mean.T6 <- rbind(ATAC.temp.mean.T6, ATHC.temp.mean.T6, HTAC.temp.mean.T6)
+Exposure.Temp.SE.T6 <- rbind(ATAC.temp.se.T6, ATHC.temp.se.T6, HTAC.temp.se.T6)
+
+Exp.Temp.Table <- cbind(Exposure.Temp.Mean.T1,Exposure.Temp.SE.T1,Exposure.Temp.Mean.T6,Exposure.Temp.SE.T6)
+colnames(Exp.Temp.Table) <- c("T1.Temp.Mean", "T1.Temp.SEM","T6.Temp.Mean", "T6.Temp.SEM")
+rownames(Exp.Temp.Table) <- c("ATAC", "ATHC", "HTAC")
+write.csv(Exp.Temp.Table, "~/MyProjects/Montipora_Acute_Exp/RAnalysis/Output/Exposure_Temp_Conditions_2016030.csv")
+
+# Exposure Temperature Means °C
+Exp.Temp.Table
 
 #Tank Light Data for Adult Exposure Experimental Period (30 June 16)
 tank.light.data <- read.csv("~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/20160630_Tank_Light_Data.csv", header=TRUE, sep=",", na.strings="NA", skip=1) #load data with a header, separated by commas, with NA as NA
@@ -281,40 +312,75 @@ tank.lightdata <-data.frame(mydate.tanks, tank.light.data$Tank4.cal, tank.light.
 colnames(tank.lightdata) <- c("Date.Time", "Tank4", "Tank6", "Tank9", "Tank11", "Tank12", "Tank13", "Tank14", "Tank15", "Tank16")
 
 #One Hour Exposure Means by Treatment
-HTAC.light.mean.T1 <- mean(na.omit(tank.lightdata$Tank4[1:5],tank.lightdata$Tank6[1:5], tank.lightdata$Tank9[1:5])) #range of average ambient light levels
-HTAC.light.mean.T1
-ATAC.light.mean.T1 <- mean(na.omit(tank.lightdata$Tank11[1:5], tank.lightdata$Tank14[1:5], tank.lightdata$Tank15[1:5])) #range of average ambient light levels
-ATAC.light.mean.T1 
-ATHC.light.mean.T1 <- mean(na.omit(tank.lightdata$Tank12[1:5], tank.lightdata$Tank13[1:5], tank.lightdata$Tank16[1:5])) #range of average ambient light levels
-ATHC.light.mean.T1
+HTAC.light.mean.T1 <- round(mean(na.omit(tank.lightdata$Tank4[1:5],tank.lightdata$Tank6[1:5], tank.lightdata$Tank9[1:5])), digits=1) 
+HTAC.light.se.T1 <-round(sd(na.omit(tank.lightdata$Tank4[1:5],tank.lightdata$Tank6[1:5], tank.lightdata$Tank9[1:5]))/sqrt(length(na.omit(tank.lightdata$Tank4[1:5],tank.lightdata$Tank6[1:5], tank.lightdata$Tank9[1:5]))), digits=1)
+
+ATAC.light.mean.T1 <- round(mean(na.omit(tank.lightdata$Tank11[1:5], tank.lightdata$Tank14[1:5], tank.lightdata$Tank15[1:5])), digits=1) 
+ATAC.light.se.T1 <-round(sd(na.omit(tank.lightdata$Tank11[1:5], tank.lightdata$Tank14[1:5], tank.lightdata$Tank15[1:5]))/sqrt(length(na.omit(tank.lightdata$Tank11[1:5], tank.lightdata$Tank14[1:5], tank.lightdata$Tank15[1:5]))), digits=1)
+
+ATHC.light.mean.T1 <- round(mean(na.omit(tank.lightdata$Tank12[1:5], tank.lightdata$Tank13[1:5], tank.lightdata$Tank16[1:5])), digits=1) 
+ATHC.light.se.T1 <-round(sd(na.omit(tank.lightdata$Tank12[1:5], tank.lightdata$Tank13[1:5], tank.lightdata$Tank16[1:5]))/sqrt(length(na.omit(tank.lightdata$Tank12[1:5], tank.lightdata$Tank13[1:5], tank.lightdata$Tank16[1:5]))), digits=1)
 
 #Six Hour Exposure Means
-HTAC.light.mean.T6 <- mean(na.omit(tank.lightdata$Tank6, tank.lightdata$Tank9)) #range of average ambient light levels
-HTAC.light.mean.T6
-ATAC.light.mean.T6 <- mean(na.omit(tank.lightdata$Tank11, tank.lightdata$Tank14, tank.lightdata$Tank15)) #range of average ambient light levels
-ATAC.light.mean.T6
-ATHC.light.mean.T6 <- mean(na.omit(tank.lightdata$Tank12, tank.lightdata$Tank13, tank.lightdata$Tank16)) #range of average ambient light levels
-ATHC.light.mean.T6 
+HTAC.light.mean.T6 <- round(mean(na.omit(tank.lightdata$Tank6, tank.lightdata$Tank9)), digits=1) 
+HTAC.light.se.T6 <-round(sd(na.omit(tank.lightdata$Tank6, tank.lightdata$Tank9))/sqrt(length(na.omit(tank.lightdata$Tank6, tank.lightdata$Tank9))), digits=1)
+
+ATAC.light.mean.T6 <- round(mean(na.omit(tank.lightdata$Tank11, tank.lightdata$Tank14, tank.lightdata$Tank15)), digits=1)
+ATAC.light.se.T6 <-round(sd(na.omit(tank.lightdata$Tank11, tank.lightdata$Tank14, tank.lightdata$Tank15))/sqrt(length(na.omit(tank.lightdata$Tank11, tank.lightdata$Tank14, tank.lightdata$Tank15))), digits=1)
+
+ATHC.light.mean.T6 <- round(mean(na.omit(tank.lightdata$Tank12, tank.lightdata$Tank13, tank.lightdata$Tank16)), digits=1)
+ATHC.light.se.T6 <-round(sd(na.omit(tank.lightdata$Tank12, tank.lightdata$Tank13, tank.lightdata$Tank16))/sqrt(length(na.omit(tank.lightdata$Tank12, tank.lightdata$Tank13, tank.lightdata$Tank16))), digits=1)
+
+Exposure.light.Mean.T1 <- rbind(ATAC.light.mean.T1, ATHC.light.mean.T1, HTAC.light.mean.T1)
+Exposure.light.SE.T1 <- rbind(ATAC.light.se.T1, ATHC.light.se.T1, HTAC.light.se.T1)
+Exposure.light.Mean.T6 <- rbind(ATAC.light.mean.T6, ATHC.light.mean.T6, HTAC.light.mean.T6)
+Exposure.light.SE.T6 <- rbind(ATAC.light.se.T6, ATHC.light.se.T6, HTAC.light.se.T6)
+
+Exp.light.Table <- cbind(Exposure.light.Mean.T1,Exposure.light.SE.T1,Exposure.light.Mean.T6,Exposure.light.SE.T6)
+colnames(Exp.light.Table) <- c("T1.light.Mean", "T1.light.SEM","T6.light.Mean", "T6.light.SEM")
+rownames(Exp.light.Table) <- c("ATAC", "ATHC", "HTAC")
+write.csv(Exp.light.Table, "~/MyProjects/Montipora_Acute_Exp/RAnalysis/Output/Exposure_Conditions_Light_2016030.csv")
+
+# Exposure Light Means µmol m-2 s-1
+Exp.light.Table
 
 #Tank pH Data for Adult Exposure Experimental Period (30 June 16)
 tank.pH.data <- read.csv("~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/20160630_Tank_pH_Data.csv", header=TRUE, sep=",", na.strings="NA", skip=1) #load data with a header, separated by commas, with NA as NA
 tank.pH.data$Date.Time <- strptime(tank.pH.data$Date.Time, format="%m/%d/%y %H:%M") #convert date format to characters
 
 #One Hour Exposure Means by Treatment
-HTAC.pH.mean.T1 <- mean(na.omit(tank.pH.data$Tank4[1:5],tank.pH.data$Tank6[1:5], tank.pH.data$Tank9[1:5])) #range of average ambient pH levels
-HTAC.pH.mean.T1
-ATAC.pH.mean.T1 <- mean(na.omit(tank.pH.data$Tank11[1:5], tank.pH.data$Tank14[1:5], tank.pH.data$Tank15[1:5])) #range of average ambient pH levels
-ATAC.pH.mean.T1 
-ATHC.pH.mean.T1 <- mean(na.omit(tank.pH.data$Tank12[1:5], tank.pH.data$Tank13[1:5], tank.pH.data$Tank16[1:5])) #range of average ambient pH levels
-ATHC.pH.mean.T1
+HTAC.pH.mean.T1 <- round(mean(na.omit(tank.pH.data$Tank4[1:5],tank.pH.data$Tank6[1:5], tank.pH.data$Tank9[1:5])), digits=3)
+HTAC.pH.se.T1 <-round(sd(na.omit(tank.pH.data$Tank4[1:5],tank.pH.data$Tank6[1:5], tank.pH.data$Tank9[1:5]))/sqrt(length(na.omit(tank.pH.data$Tank4[1:5],tank.pH.data$Tank6[1:5], tank.pH.data$Tank9[1:5]))), digits=3)
+
+ATAC.pH.mean.T1 <- round(mean(na.omit(tank.pH.data$Tank11[1:5], tank.pH.data$Tank14[1:5], tank.pH.data$Tank15[1:5])), digits=3) 
+ATAC.pH.se.T1 <-round(sd(na.omit(tank.pH.data$Tank11[1:5], tank.pH.data$Tank14[1:5], tank.pH.data$Tank15[1:5]))/sqrt(length(na.omit(tank.pH.data$Tank11[1:5], tank.pH.data$Tank14[1:5], tank.pH.data$Tank15[1:5]))), digits=3)
+
+ATHC.pH.mean.T1 <- round(mean(na.omit(tank.pH.data$Tank12[1:5], tank.pH.data$Tank13[1:5], tank.pH.data$Tank16[1:5])), digits=3)
+ATHC.pH.se.T1 <-round(sd(na.omit(tank.pH.data$Tank12[1:5], tank.pH.data$Tank13[1:5], tank.pH.data$Tank16[1:5]))/sqrt(length(na.omit(tank.pH.data$Tank12[1:5], tank.pH.data$Tank13[1:5], tank.pH.data$Tank16[1:5]))), digits=3)
 
 #Six Hour Exposure Means
-HTAC.pH.mean.T6 <- mean(na.omit(tank.pH.data$Tank4, tank.pH.data$Tank6, tank.pH.data$Tank9)) #range of average ambient pH levels
-HTAC.pH.mean.T6
-ATAC.pH.mean.T6 <- mean(na.omit(tank.pH.data$Tank11, tank.pH.data$Tank14, tank.pH.data$Tank15)) #range of average ambient pH levels
-ATAC.pH.mean.T6
-ATHC.pH.mean.T6 <- mean(na.omit(tank.pH.data$Tank12, tank.pH.data$Tank13, tank.pH.data$Tank16)) #range of average ambient pH levels
-ATHC.pH.mean.T6 
+HTAC.pH.mean.T6 <- round(mean(na.omit(tank.pH.data$Tank4, tank.pH.data$Tank6, tank.pH.data$Tank9)), digits=3)
+HTAC.pH.se.T6 <-round(sd(na.omit(tank.pH.data$Tank4, tank.pH.data$Tank6, tank.pH.data$Tank9))/sqrt(length(na.omit(tank.pH.data$Tank4, tank.pH.data$Tank6, tank.pH.data$Tank9))), digits=3)
+
+ATAC.pH.mean.T6 <- round(mean(na.omit(tank.pH.data$Tank11, tank.pH.data$Tank14, tank.pH.data$Tank15)), digits=3) 
+ATAC.pH.se.T6 <-round(sd(na.omit(tank.pH.data$Tank11, tank.pH.data$Tank14, tank.pH.data$Tank15))/sqrt(length(na.omit(tank.pH.data$Tank11, tank.pH.data$Tank14, tank.pH.data$Tank15))), digits=3)
+
+ATHC.pH.mean.T6 <- round(mean(na.omit(tank.pH.data$Tank12, tank.pH.data$Tank13, tank.pH.data$Tank16)), digits=3) 
+ATHC.pH.se.T6 <-round(sd(na.omit(tank.pH.data$Tank12, tank.pH.data$Tank13, tank.pH.data$Tank16))/sqrt(length(na.omit(tank.pH.data$Tank12, tank.pH.data$Tank13, tank.pH.data$Tank16))), digits=3)
+
+Exposure.pH.Mean.T1 <- rbind(ATAC.pH.mean.T1, ATHC.pH.mean.T1, HTAC.pH.mean.T1)
+Exposure.pH.SE.T1 <- rbind(ATAC.pH.se.T1, ATHC.pH.se.T1, HTAC.pH.se.T1)
+Exposure.pH.Mean.T6 <- rbind(ATAC.pH.mean.T6, ATHC.pH.mean.T6, HTAC.pH.mean.T6)
+Exposure.pH.SE.T6 <- rbind(ATAC.pH.se.T6, ATHC.pH.se.T6, HTAC.pH.se.T6)
+
+Exp.pH.Table <- cbind(Exposure.pH.Mean.T1,Exposure.pH.SE.T1,Exposure.pH.Mean.T6,Exposure.pH.SE.T6)
+colnames(Exp.pH.Table) <- c("T1.pH.Mean", "T1.pH.SEM","T6.pH.Mean", "T6.pH.SEM")
+rownames(Exp.pH.Table) <- c("ATAC", "ATHC", "HTAC")
+write.csv(Exp.pH.Table, "~/MyProjects/Montipora_Acute_Exp/RAnalysis/Output/Exposure_Conditions_pH_2016030.csv")
+
+# Exposure pH Means NBS
+Exp.pH.Table
+
 
 
 #Plotting Figures
@@ -413,4 +479,141 @@ Fig.Exposure.pH <- ggplot(tank.pH.data) + #Plot average diurnal cycle of tempera
 # Plotting
 ``` {r Plots, echo=FALSE}
 grid.arrange(arrangeGrob(Fig.Acc.Temp, Fig.Acc.Light, Fig.Acc.pH, left="ACCLIMATION", ncol=3), arrangeGrob(Fig.Exposure.Temp, Fig.Exposure.Light, Fig.Exposure.pH, left="EXPOSURE", ncol=3), ncol=1)
+```
+
+```{r Seawater Chemistry}
+# DISCRETE pH CALCULATIONS 
+path <-("~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/pH_Calibration_Files/")
+file.names<-list.files(path = path, pattern = "csv$") #list all the file names in the folder to get only get the csv files
+pH.cals <- data.frame(matrix(NA, nrow=length(file.names), ncol=3, dimnames=list(file.names,c("Date", "Intercept", "Slope")))) #generate a 3 column dataframe with specific column names
+
+for(i in 1:length(file.names)) { # for every file in list start at the first and run this following function
+  Calib.Data <-read.table(file.path(path,file.names[i]), header=TRUE, sep=",", na.string="NA", as.is=TRUE) #reads in the data files
+  model <-lm(mVTris ~ TTris, data=Calib.Data) #runs a linear regression of mV as a function of temperature
+  coe <- coef(model) #extracts the coeffecients
+  pH.cals[i,2:3] <- coe #inserts them in the dataframe
+  pH.cals[i,1] <- substr(file.names[i],1,8) #stores the file name in the Date column
+}
+colnames(pH.cals) <- c("Calib.Date",  "Intercept",  "Slope") #rename columns
+pH.cals #view data
+
+#constants for use in pH calculation 
+R <- 8.31447215 #gas constant in J mol-1 K-1 
+F <-96485.339924 #Faraday constant in coulombs mol-1
+
+#read in probe measurements of pH, temperature, and salinity from tanks
+daily <- read.csv("~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/Daily_Temp_pH_Sal_All.csv", header=TRUE, sep=",", na.strings="NA") #load data with a header, separated by commas, with NA as NA
+
+#merge with Seawater chemistry file
+SW.chem <- merge(pH.cals, daily, by="Calib.Date")
+
+mvTris <- SW.chem$Temperature*SW.chem$Slope+SW.chem$Intercept #calculate the mV of the tris standard using the temperature mv relationships in the measured standard curves 
+STris<-34.5 #salinity of the Tris
+phTris<- (11911.08-18.2499*STris-0.039336*STris^2)*(1/(SW.chem$Temperature+273.15))-366.27059+ 0.53993607*STris+0.00016329*STris^2+(64.52243-0.084041*STris)*log(SW.chem$Temperature+273.15)-0.11149858*(SW.chem$Temperature+273.15) #calculate the pH of the tris (Dickson A. G., Sabine C. L. and Christian J. R., SOP 6a)
+SW.chem$pH.Total<-phTris+(mvTris/1000-SW.chem$pH.MV/1000)/(R*(SW.chem$Temperature+273.15)*log(10)/F) #calculate the pH on the total scale (Dickson A. G., Sabine C. L. and Christian J. R., SOP 6a)
+
+##### DISCRETE TA CALCULATIONS #####
+setwd(file.path(mainDir, 'Data'))
+massfile<-"~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/TA_mass_data.csv" # name of your file with masses
+path<-"~/MyProjects/HI_Pdam_Parental/RAnalysis/Data/TA" #the location of all your titration files
+Sample.Info <- read.csv("TA_mass_data.csv", header=T, sep=",", na.string="NA", as.is=T) #load data
+Mass<-read.csv(massfile, header=T, sep=",", na.string="NA", as.is=T, row.names=1)  #load Sample Info Data
+
+# Select the mV for pH=3 and pH=3.5 based on probe calibration
+pH35<-mean(Sample.Info$pH35, na.rm=T) #take the average mV reading for pH 3.5 across all samples
+pH3<-mean(Sample.Info$pH3, na.rm=T) #take the average mV reading for pH 3.0 across all samples
+
+#find all the titration data files
+file.names<-list.files(path=path) #list all the file names in your data and sample directory
+file.names <- file.names[grep("[.]csv", file.names)] # select only get the csv files
+
+#create an empty dataframe to put the TA values in
+nrow<-length(file.names) #set number of rows to the number of samples
+TA <- matrix(nrow = nrow, ncol = 3) #set the dimensions of the dataframe
+rownames(TA)<-file.names #identify row names
+colnames(TA)<-c('Sample.ID','Mass','TA.Mes') #identify column names
+
+setwd(file.path(mainDir, 'Data/TA')) # set working directory to where the data are
+#run a for loop to bring in the titration files one at a time and calculate TA
+for(i in 1: length(file.names)) {
+  Data<-read.table(file.names[i], header=F, sep=",", na.string="NA",as.is=T) #read in each data file
+  Data<-Data[-1:-6,] #remove the rows with characters
+  
+  # everything was brought in as a character because of the second line, converts back to numeric
+  Data$Temperature<-as.numeric(Data[,7]) #convert to numeric and assign temperature column
+  Data$Signal<-as.numeric(Data[,3]) #convert to numeric and assign mV column
+  Data$Volume<-as.numeric(Data[,1]) #convert to numeric and assign volumn of titrant column
+  
+  #name of the file without .csv
+  name<-unlist(strsplit(file.names[i], split='.', fixed=TRUE))[1]
+  
+  #identifies the indices of values between pH 3 and 3.5 
+  mV<-which(Data$Signal<pH3 & Data$Signal>pH35) 
+  
+  #density of your titrant: specific to each bottle
+  d1<-100*(-0.00000331*mean(Data$Temperature[mV], na.rm=T)^2-0.0001401*mean(Data$Temperature[mV], na.rm=T)+1.02933)/1000
+  d2<-100*(-0.00000350*mean(Data$Temperature[mV], na.rm=T)^2-0.0001319*mean(Data$Temperature[mV], na.rm=T)+1.02907)/1000
+  d3<-100*(-0.00000379*mean(Data$Temperature[mV], na.rm=T)^2-0.00012043*mean(Data$Temperature[mV], na.rm=T)+1.0296876)/1000
+  
+d <- if(Mass[name,4] =="d1") {
+    d1                              #if density function = d1 use d1
+  } else if(Mass[name,4] =="d2") {
+    d2                              #if density function = d2 use d2
+  } else if(Mass[name,4] =="d3")
+    d3                              #if density function = d3 use d3
+  
+  #concentration of your titrant: specific to each bottle
+  c<-Mass[name,3]
+
+  #Salinity of your samples: changed with every sample
+  s<-Mass[name,2]
+  
+  #mass of sample in g: changed with every sample
+  mass<-Mass[name,1]
+
+  #Calculate TA
+  #at function is based on code in saecarb package by Steeve Comeau, Heloise Lavigne and Jean-Pierre Gattuso
+  TA[i,1]<-name #add sample name to data output
+  TA[i,2]<-mass #add mass to data output
+  TA[i,3]<-10000000*at(S=s,T=mean(Data$Temperature[mV], na.rm=T), C=c, d=d, pHTris=NULL, ETris=NULL, weight=mass, E=Data$Signal[mV], volume=Data$Volume[mV]) #add TA to data output
+}
+
+TA <- data.frame(TA) #make a dataframe from the TA results
+
+#load CRM standard Info
+setwd(file.path(mainDir, 'Data')) # set working directory to where the data are
+CRMs <- read.csv("CRM_TA_Data.csv", header=TRUE, sep=",", na.strings="NA") #load data with a header, separated by commas, with NA as NA
+Refs <- merge(CRMs, TA, by="Sample.ID") #merge the TA calculations with the Reference metadata
+Refs$TA.Mes <- as.numeric(paste(Refs$TA.Mes)) #set valuse as numeric
+Refs$Per.Off <- 100*((Refs$TA.Mes-Refs$CRM.TA)/Refs$CRM.TA) #calculate the percent difference of the TA from the CRM
+Refs$TA.Corr <- Refs$CRM.TA-Refs$TA.Mes #correct TA for offset from CRM
+Refs <- Refs[order(Refs$Date, abs(Refs$TA.Corr) ), ] #sort by id and reverse of abs(value)
+Refs <- Refs[ !duplicated(Refs$Date), ]  # take the first row within each id
+Refs #view data
+CRM.res <- mean(Refs$Per.Off, na.rm=T) #calculate the average % difference of TA from CRM values over the course of the experiment
+CRM.res #view the resolution of TA assay according to tests againsts Dickson CRMs
+
+##### SEAWATER CHEMISTRY ANALYSIS FOR DISCRETE MEASUREMENTS#####
+#Seawater chemistry table from simultaneous TA, pH, temperature and salinity measurements
+#merge calculated pH and daily measures with TA data and run seacarb
+SW.chem$Sample.ID <- paste(SW.chem$Date, SW.chem$Tank, sep='_') #generate new row with concatenated sample id
+SW.chem <- merge(SW.chem,TA, by="Sample.ID", all = TRUE, sort = T) #merge seawater chemistry with total alkalinity
+SW.chem <- na.omit(SW.chem) #remove NA
+SW.chem <- merge(SW.chem, Refs[c("Date", "TA.Corr")], by="Date", all = F, sort = F) #merge seawater chemistry with total alkalinity
+SW.chem$TA.Mes <- as.numeric(paste(SW.chem$TA.Mes)) #set as numeric
+SW.chem$TA.Corr <- as.numeric(paste(SW.chem$TA.Corr)) #set as numeric
+SW.chem$Corrected.TA <- SW.chem$TA.Mes - SW.chem$TA.Corr #correct for offset from CRM
+SW.chem <- na.omit(SW.chem) #remove NA
+
+#Calculate CO2 parameters using seacarb
+carb.ouptput <- carb(flag=8, var1=SW.chem$pH.Total, var2=SW.chem$Corrected.TA/1000000, S= SW.chem$Salinity, T=SW.chem$Temperature, P=0, Pt=0, Sit=0, pHscale="T", kf="pf", k1k2="l", ks="d") #calculate seawater chemistry parameters using seacarb
+carb.ouptput$ALK <- carb.ouptput$ALK*1000000 #convert to µmol kg-1
+carb.ouptput$CO2 <- carb.ouptput$CO2*1000000 #convert to µmol kg-1
+carb.ouptput$HCO3 <- carb.ouptput$HCO3*1000000 #convert to µmol kg-1
+carb.ouptput$CO3 <- carb.ouptput$CO3*1000000 #convert to µmol kg-1
+carb.ouptput$DIC <- carb.ouptput$DIC*1000000 #convert to µmol kg-1
+carb.ouptput <- carb.ouptput[,-c(1,4,5,8,10:13,19)] #subset variables of interest
+carb.ouptput <- cbind(SW.chem$Date,  SW.chem$Tank,  SW.chem$Treatment, SW.chem$Period1,SW.chem$Period2, SW.chem$Period3, carb.ouptput) #combine the sample information with the seacarb output
+colnames(carb.ouptput) <- c("Date",  "Tank",  "Treatment",	"Period1", "Period2", "Period3",	"Salinity",	"Temperature", "pH",	"CO2",	"pCO2","HCO3",	"CO3",	"DIC", "TA",	"Aragonite.Sat") #Rename columns to describe contents
+write.table(carb.ouptput, "~/MyProjects/HI_Pdam_Parental/RAnalysis/Output/Seawater_chemistry_table_Output_All.csv", sep=",", row.names = FALSE) #save data
 ```

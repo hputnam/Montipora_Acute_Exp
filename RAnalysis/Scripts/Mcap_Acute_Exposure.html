@@ -172,9 +172,12 @@ Acc.temp.N #View data</code></pre>
 colnames(temp.means) &lt;- c(&quot;Time&quot;, &quot;mean&quot;, &quot;se&quot;)  #rename columns to describe contents
 range(na.omit(temp.means$mean)) #range of average temp levels</code></pre>
 <pre><code>## [1] 25.98532 27.59986</code></pre>
-<pre class="r"><code>mean(na.omit(Acc.data$temp))</code></pre>
-<pre><code>## [1] 26.68168</code></pre>
-<pre class="r"><code>#Tank Light Data for Acclimation Period (15 June 2016 - 29 June 2016)
+<pre class="r"><code>Acc.temp.m &lt;- round(mean(na.omit(Acc.data$temp)), digits=2)
+Acc.temp.se &lt;-round(sd(na.omit(Acc.data$temp))/sqrt(length(na.omit(Acc.data$temp))), digits=2)
+
+Acclimation.Temps &lt;- cbind(&quot;Temperature&quot;, Acc.temp.m, Acc.temp.se)
+
+#Tank Light Data for Acclimation Period (15 June 2016 - 29 June 2016)
 quarterly.light.mean &lt;- aggregate(light ~ quarterhours, data=Acc.data, mean, na.rm=TRUE) #calculate mean of lighterature for every 15 min interval
 quarterly.light.mean &lt;- rbind(c(&quot;06:00&quot;,&quot;0&quot;), quarterly.light.mean) #combine rows
 quarterly.light.se &lt;- aggregate(light ~ quarterhours, data=Acc.data, std.error, na.rm=TRUE) #calculate standard error of the mean of lighterature for every 15 min interval
@@ -189,9 +192,12 @@ light.means$mean &lt;- as.numeric(light.means$mean)
 light.means$se &lt;- as.numeric(light.means$se)
 range(na.omit(light.means$mean)) #range of average light levels</code></pre>
 <pre><code>## [1]   4.20058 429.73827</code></pre>
-<pre class="r"><code>mean(na.omit(Acc.data$light))</code></pre>
-<pre><code>## [1] 140.8136</code></pre>
-<pre class="r"><code>#Tank NBS pH Data for Acclimation Period (15 June 2016 - 29 June 2016)
+<pre class="r"><code>Acc.light.m &lt;- round(mean(na.omit(Acc.data$light)), digits=1)
+Acc.light.se &lt;-round(sd(na.omit(Acc.data$light))/sqrt(length(na.omit(Acc.data$light))), digits=1)
+
+Acclimation.light &lt;- cbind(&quot;Light&quot;, Acc.light.m, Acc.light.se)
+
+#Tank NBS pH Data for Acclimation Period (15 June 2016 - 29 June 2016)
 quarterly.pH.mean &lt;- aggregate(pH ~ quarterhours, data=Acc.data, mean, na.rm=TRUE) #calculate mean of pHerature for every 15 min interval
 quarterly.pH.se &lt;- aggregate(pH ~ quarterhours, data=Acc.data, std.error, na.rm=TRUE) #calculate standard error of the mean of pHerature for every 15 min interval
 Acc.pH.N &lt;- sum(!is.na(Acc.data$pH)) #Count sample size without NA values
@@ -201,9 +207,16 @@ Acc.pH.N #View data</code></pre>
 colnames(pH.means) &lt;- c(&quot;Time&quot;, &quot;mean&quot;, &quot;se&quot;)  #rename columns to describe contents
 range(na.omit(pH.means$mean)) #range of average pH levels</code></pre>
 <pre><code>## [1] 7.935714 8.124286</code></pre>
-<pre class="r"><code>mean(na.omit(Acc.data$pH))</code></pre>
-<pre><code>## [1] 8.018765</code></pre>
-<pre class="r"><code>Fig.Acc.Temp &lt;- ggplot(temp.means) + #Plot average diurnal cycle of temperature data
+<pre class="r"><code>Acc.pH.m &lt;- round(mean(na.omit(Acc.data$pH)), digits=3)
+Acc.pH.se &lt;-round(sd(na.omit(Acc.data$pH))/sqrt(length(na.omit(Acc.data$pH))), digits=3)
+
+Acclimation.pH &lt;- cbind(&quot;pH&quot;, Acc.pH.m, Acc.pH.se)
+
+Acc.Table &lt;- rbind(Acclimation.Temps,Acclimation.light,Acclimation.pH)
+colnames(Acc.Table) &lt;- c(&quot;Parameter&quot;, &quot;Mean&quot;, &quot;SEM&quot;)
+write.csv(Acc.Table, &quot;~/MyProjects/Montipora_Acute_Exp/RAnalysis/Output/Acclimation_Conditions_20160615_20160630.csv&quot;)
+
+Fig.Acc.Temp &lt;- ggplot(temp.means) + #Plot average diurnal cycle of temperature data
   geom_point(aes(x = Time, y = mean), colour=&quot;black&quot;, cex=0.8) + #Plot points using time as the x axis, light as the Y axis and black dots
   geom_errorbar(aes(x=Time, ymax=mean+se, ymin=mean-se), position=position_dodge(0.9), data=temp.means, col=&quot;black&quot;, width=0) + #set values for standard error bars and offset on the X axis for clarity
   scale_x_discrete(breaks=c(&quot;01:00&quot;, &quot;06:00&quot;, &quot;12:00&quot;, &quot;18:00&quot;, &quot;23:00&quot;)) + #set discrete breaks on the X axis
@@ -284,25 +297,41 @@ tank.tempdata &lt;-data.frame(mydate.tanks, tank.temp.data$Tank6.cal, tank.temp.
 colnames(tank.tempdata) &lt;- c(&quot;Date.Time&quot;, &quot;Tank6&quot;, &quot;Tank9&quot;, &quot;Tank11&quot;, &quot;Tank12&quot;, &quot;Tank13&quot;, &quot;Tank14&quot;, &quot;Tank15&quot;, &quot;Tank16&quot;)
 
 #One Hour Exposure Means by Treatment
-HTAC.temp.mean.T1 &lt;- mean(na.omit(tank.tempdata$Tank6[1:5], tank.tempdata$Tank9[1:5])) #range of average ambient temp levels
-HTAC.temp.mean.T1</code></pre>
-<pre><code>## [1] 28.66752</code></pre>
-<pre class="r"><code>ATAC.temp.mean.T1 &lt;- mean(na.omit(tank.tempdata$Tank11[1:5], tank.tempdata$Tank14[1:5], tank.tempdata$Tank15[1:5])) #range of average ambient temp levels
-ATAC.temp.mean.T1 </code></pre>
-<pre><code>## [1] 26.87212</code></pre>
-<pre class="r"><code>ATHC.temp.mean.T1 &lt;- mean(na.omit(tank.tempdata$Tank12[1:5], tank.tempdata$Tank13[1:5], tank.tempdata$Tank16[1:5])) #range of average ambient temp levels
-ATHC.temp.mean.T1</code></pre>
-<pre><code>## [1] 26.9349</code></pre>
-<pre class="r"><code>#Six Hour Exposure Means
-HTAC.temp.mean.T6 &lt;- mean(na.omit(tank.tempdata$Tank6, tank.tempdata$Tank9)) #range of average ambient temp levels
-HTAC.temp.mean.T6</code></pre>
-<pre><code>## [1] 29.05418</code></pre>
-<pre class="r"><code>ATAC.temp.mean.T6 &lt;- mean(na.omit(tank.tempdata$Tank11, tank.tempdata$Tank14, tank.tempdata$Tank15)) #range of average ambient temp levels
-ATAC.temp.mean.T6</code></pre>
-<pre><code>## [1] 27.13788</code></pre>
-<pre class="r"><code>ATHC.temp.mean.T6 &lt;- mean(na.omit(tank.tempdata$Tank12, tank.tempdata$Tank13, tank.tempdata$Tank16)) #range of average ambient temp levels
-ATHC.temp.mean.T6 </code></pre>
-<pre><code>## [1] 27.33263</code></pre>
+HTAC.temp.mean.T1 &lt;- round(mean(na.omit(tank.tempdata$Tank6[1:5], tank.tempdata$Tank9[1:5])), digits=2) 
+HTAC.temp.se.T1 &lt;-round(sd(na.omit(tank.tempdata$Tank6[1:5], tank.tempdata$Tank9[1:5]))/sqrt(length(na.omit(tank.tempdata$Tank6[1:5], tank.tempdata$Tank9[1:5]))), digits=2)
+
+ATAC.temp.mean.T1 &lt;- round(mean(na.omit(tank.tempdata$Tank11[1:5], tank.tempdata$Tank14[1:5], tank.tempdata$Tank15[1:5])), digits=2) 
+ATAC.temp.se.T1 &lt;-round(sd(na.omit(tank.tempdata$Tank11[1:5], tank.tempdata$Tank14[1:5], tank.tempdata$Tank15[1:5]))/sqrt(length(na.omit(tank.tempdata$Tank11[1:5], tank.tempdata$Tank14[1:5], tank.tempdata$Tank15[1:5]))), digits=2)
+
+ATHC.temp.mean.T1 &lt;- round(mean(na.omit(tank.tempdata$Tank12[1:5], tank.tempdata$Tank13[1:5], tank.tempdata$Tank16[1:5])), digits=2) 
+ATHC.temp.se.T1 &lt;-round(sd(na.omit(tank.tempdata$Tank12[1:5], tank.tempdata$Tank13[1:5], tank.tempdata$Tank16[1:5]))/sqrt(length(na.omit(tank.tempdata$Tank12[1:5], tank.tempdata$Tank13[1:5], tank.tempdata$Tank16[1:5]))), digits=2)
+
+#Six Hour Exposure Means
+HTAC.temp.mean.T6 &lt;- round(mean(na.omit(tank.tempdata$Tank6, tank.tempdata$Tank9)), digits=2) 
+HTAC.temp.se.T6 &lt;-round(sd(na.omit(tank.tempdata$Tank6, tank.tempdata$Tank9))/sqrt(length(na.omit(tank.tempdata$Tank6, tank.tempdata$Tank9))), digits=2)
+
+ATAC.temp.mean.T6 &lt;- round(mean(na.omit(tank.tempdata$Tank11, tank.tempdata$Tank14, tank.tempdata$Tank15)), digits=2) 
+ATAC.temp.se.T6 &lt;-round(sd(na.omit(tank.tempdata$Tank11, tank.tempdata$Tank14, tank.tempdata$Tank15))/sqrt(length(na.omit(tank.tempdata$Tank11, tank.tempdata$Tank14, tank.tempdata$Tank15))), digits=2)
+
+ATHC.temp.mean.T6 &lt;- round(mean(na.omit(tank.tempdata$Tank12, tank.tempdata$Tank13, tank.tempdata$Tank16)), digits=2)
+ATHC.temp.se.T6 &lt;-round(sd(na.omit(tank.tempdata$Tank12, tank.tempdata$Tank13, tank.tempdata$Tank16))/sqrt(length(na.omit(tank.tempdata$Tank12, tank.tempdata$Tank13, tank.tempdata$Tank16))), digits=2)
+
+Exposure.Temp.Mean.T1 &lt;- rbind(ATAC.temp.mean.T1, ATHC.temp.mean.T1, HTAC.temp.mean.T1)
+Exposure.Temp.SE.T1 &lt;- rbind(ATAC.temp.se.T1, ATHC.temp.se.T1, HTAC.temp.se.T1)
+Exposure.Temp.Mean.T6 &lt;- rbind(ATAC.temp.mean.T6, ATHC.temp.mean.T6, HTAC.temp.mean.T6)
+Exposure.Temp.SE.T6 &lt;- rbind(ATAC.temp.se.T6, ATHC.temp.se.T6, HTAC.temp.se.T6)
+
+Exp.Temp.Table &lt;- cbind(Exposure.Temp.Mean.T1,Exposure.Temp.SE.T1,Exposure.Temp.Mean.T6,Exposure.Temp.SE.T6)
+colnames(Exp.Temp.Table) &lt;- c(&quot;T1.Temp.Mean&quot;, &quot;T1.Temp.SEM&quot;,&quot;T6.Temp.Mean&quot;, &quot;T6.Temp.SEM&quot;)
+rownames(Exp.Temp.Table) &lt;- c(&quot;ATAC&quot;, &quot;ATHC&quot;, &quot;HTAC&quot;)
+write.csv(Exp.Temp.Table, &quot;~/MyProjects/Montipora_Acute_Exp/RAnalysis/Output/Exposure_Temp_Conditions_2016030.csv&quot;)
+
+# Exposure Temperature Means °C
+Exp.Temp.Table</code></pre>
+<pre><code>##      T1.Temp.Mean T1.Temp.SEM T6.Temp.Mean T6.Temp.SEM
+## ATAC        26.87        0.01        27.14        0.06
+## ATHC        26.93        0.01        27.33        0.08
+## HTAC        28.67        0.01        29.05        0.08</code></pre>
 <pre class="r"><code>#Tank Light Data for Adult Exposure Experimental Period (30 June 16)
 tank.light.data &lt;- read.csv(&quot;~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/20160630_Tank_Light_Data.csv&quot;, header=TRUE, sep=&quot;,&quot;, na.strings=&quot;NA&quot;, skip=1) #load data with a header, separated by commas, with NA as NA
 mydate.tanks &lt;- strptime(tank.light.data$Date.Time, format=&quot;%m/%d/%y %H:%M&quot;) #convert date format to characters
@@ -321,49 +350,81 @@ tank.lightdata &lt;-data.frame(mydate.tanks, tank.light.data$Tank4.cal, tank.lig
 colnames(tank.lightdata) &lt;- c(&quot;Date.Time&quot;, &quot;Tank4&quot;, &quot;Tank6&quot;, &quot;Tank9&quot;, &quot;Tank11&quot;, &quot;Tank12&quot;, &quot;Tank13&quot;, &quot;Tank14&quot;, &quot;Tank15&quot;, &quot;Tank16&quot;)
 
 #One Hour Exposure Means by Treatment
-HTAC.light.mean.T1 &lt;- mean(na.omit(tank.lightdata$Tank4[1:5],tank.lightdata$Tank6[1:5], tank.lightdata$Tank9[1:5])) #range of average ambient light levels
-HTAC.light.mean.T1</code></pre>
-<pre><code>## [1] 8.436808</code></pre>
-<pre class="r"><code>ATAC.light.mean.T1 &lt;- mean(na.omit(tank.lightdata$Tank11[1:5], tank.lightdata$Tank14[1:5], tank.lightdata$Tank15[1:5])) #range of average ambient light levels
-ATAC.light.mean.T1 </code></pre>
-<pre><code>## [1] NaN</code></pre>
-<pre class="r"><code>ATHC.light.mean.T1 &lt;- mean(na.omit(tank.lightdata$Tank12[1:5], tank.lightdata$Tank13[1:5], tank.lightdata$Tank16[1:5])) #range of average ambient light levels
-ATHC.light.mean.T1</code></pre>
-<pre><code>## [1] NaN</code></pre>
-<pre class="r"><code>#Six Hour Exposure Means
-HTAC.light.mean.T6 &lt;- mean(na.omit(tank.lightdata$Tank6, tank.lightdata$Tank9)) #range of average ambient light levels
-HTAC.light.mean.T6</code></pre>
-<pre><code>## [1] 184.6642</code></pre>
-<pre class="r"><code>ATAC.light.mean.T6 &lt;- mean(na.omit(tank.lightdata$Tank11, tank.lightdata$Tank14, tank.lightdata$Tank15)) #range of average ambient light levels
-ATAC.light.mean.T6</code></pre>
-<pre><code>## [1] NaN</code></pre>
-<pre class="r"><code>ATHC.light.mean.T6 &lt;- mean(na.omit(tank.lightdata$Tank12, tank.lightdata$Tank13, tank.lightdata$Tank16)) #range of average ambient light levels
-ATHC.light.mean.T6 </code></pre>
-<pre><code>## [1] NaN</code></pre>
+HTAC.light.mean.T1 &lt;- round(mean(na.omit(tank.lightdata$Tank4[1:5],tank.lightdata$Tank6[1:5], tank.lightdata$Tank9[1:5])), digits=1) 
+HTAC.light.se.T1 &lt;-round(sd(na.omit(tank.lightdata$Tank4[1:5],tank.lightdata$Tank6[1:5], tank.lightdata$Tank9[1:5]))/sqrt(length(na.omit(tank.lightdata$Tank4[1:5],tank.lightdata$Tank6[1:5], tank.lightdata$Tank9[1:5]))), digits=1)
+
+ATAC.light.mean.T1 &lt;- round(mean(na.omit(tank.lightdata$Tank11[1:5], tank.lightdata$Tank14[1:5], tank.lightdata$Tank15[1:5])), digits=1) 
+ATAC.light.se.T1 &lt;-round(sd(na.omit(tank.lightdata$Tank11[1:5], tank.lightdata$Tank14[1:5], tank.lightdata$Tank15[1:5]))/sqrt(length(na.omit(tank.lightdata$Tank11[1:5], tank.lightdata$Tank14[1:5], tank.lightdata$Tank15[1:5]))), digits=1)
+
+ATHC.light.mean.T1 &lt;- round(mean(na.omit(tank.lightdata$Tank12[1:5], tank.lightdata$Tank13[1:5], tank.lightdata$Tank16[1:5])), digits=1) 
+ATHC.light.se.T1 &lt;-round(sd(na.omit(tank.lightdata$Tank12[1:5], tank.lightdata$Tank13[1:5], tank.lightdata$Tank16[1:5]))/sqrt(length(na.omit(tank.lightdata$Tank12[1:5], tank.lightdata$Tank13[1:5], tank.lightdata$Tank16[1:5]))), digits=1)
+
+#Six Hour Exposure Means
+HTAC.light.mean.T6 &lt;- round(mean(na.omit(tank.lightdata$Tank6, tank.lightdata$Tank9)), digits=1) 
+HTAC.light.se.T6 &lt;-round(sd(na.omit(tank.lightdata$Tank6, tank.lightdata$Tank9))/sqrt(length(na.omit(tank.lightdata$Tank6, tank.lightdata$Tank9))), digits=1)
+
+ATAC.light.mean.T6 &lt;- round(mean(na.omit(tank.lightdata$Tank11, tank.lightdata$Tank14, tank.lightdata$Tank15)), digits=1)
+ATAC.light.se.T6 &lt;-round(sd(na.omit(tank.lightdata$Tank11, tank.lightdata$Tank14, tank.lightdata$Tank15))/sqrt(length(na.omit(tank.lightdata$Tank11, tank.lightdata$Tank14, tank.lightdata$Tank15))), digits=1)
+
+ATHC.light.mean.T6 &lt;- round(mean(na.omit(tank.lightdata$Tank12, tank.lightdata$Tank13, tank.lightdata$Tank16)), digits=1)
+ATHC.light.se.T6 &lt;-round(sd(na.omit(tank.lightdata$Tank12, tank.lightdata$Tank13, tank.lightdata$Tank16))/sqrt(length(na.omit(tank.lightdata$Tank12, tank.lightdata$Tank13, tank.lightdata$Tank16))), digits=1)
+
+Exposure.light.Mean.T1 &lt;- rbind(ATAC.light.mean.T1, ATHC.light.mean.T1, HTAC.light.mean.T1)
+Exposure.light.SE.T1 &lt;- rbind(ATAC.light.se.T1, ATHC.light.se.T1, HTAC.light.se.T1)
+Exposure.light.Mean.T6 &lt;- rbind(ATAC.light.mean.T6, ATHC.light.mean.T6, HTAC.light.mean.T6)
+Exposure.light.SE.T6 &lt;- rbind(ATAC.light.se.T6, ATHC.light.se.T6, HTAC.light.se.T6)
+
+Exp.light.Table &lt;- cbind(Exposure.light.Mean.T1,Exposure.light.SE.T1,Exposure.light.Mean.T6,Exposure.light.SE.T6)
+colnames(Exp.light.Table) &lt;- c(&quot;T1.light.Mean&quot;, &quot;T1.light.SEM&quot;,&quot;T6.light.Mean&quot;, &quot;T6.light.SEM&quot;)
+rownames(Exp.light.Table) &lt;- c(&quot;ATAC&quot;, &quot;ATHC&quot;, &quot;HTAC&quot;)
+write.csv(Exp.light.Table, &quot;~/MyProjects/Montipora_Acute_Exp/RAnalysis/Output/Exposure_Conditions_Light_2016030.csv&quot;)
+
+# Exposure Light Means µmol m-2 s-1
+Exp.light.Table</code></pre>
+<pre><code>##      T1.light.Mean T1.light.SEM T6.light.Mean T6.light.SEM
+## ATAC           NaN           NA           NaN           NA
+## ATHC           NaN           NA           NaN           NA
+## HTAC           8.4          4.3         184.7         25.7</code></pre>
 <pre class="r"><code>#Tank pH Data for Adult Exposure Experimental Period (30 June 16)
 tank.pH.data &lt;- read.csv(&quot;~/MyProjects/Montipora_Acute_Exp/RAnalysis/Data/20160630_Tank_pH_Data.csv&quot;, header=TRUE, sep=&quot;,&quot;, na.strings=&quot;NA&quot;, skip=1) #load data with a header, separated by commas, with NA as NA
 tank.pH.data$Date.Time &lt;- strptime(tank.pH.data$Date.Time, format=&quot;%m/%d/%y %H:%M&quot;) #convert date format to characters
 
 #One Hour Exposure Means by Treatment
-HTAC.pH.mean.T1 &lt;- mean(na.omit(tank.pH.data$Tank4[1:5],tank.pH.data$Tank6[1:5], tank.pH.data$Tank9[1:5])) #range of average ambient pH levels
-HTAC.pH.mean.T1</code></pre>
-<pre><code>## [1] NaN</code></pre>
-<pre class="r"><code>ATAC.pH.mean.T1 &lt;- mean(na.omit(tank.pH.data$Tank11[1:5], tank.pH.data$Tank14[1:5], tank.pH.data$Tank15[1:5])) #range of average ambient pH levels
-ATAC.pH.mean.T1 </code></pre>
-<pre><code>## [1] 7.922</code></pre>
-<pre class="r"><code>ATHC.pH.mean.T1 &lt;- mean(na.omit(tank.pH.data$Tank12[1:5], tank.pH.data$Tank13[1:5], tank.pH.data$Tank16[1:5])) #range of average ambient pH levels
-ATHC.pH.mean.T1</code></pre>
-<pre><code>## [1] 7.652</code></pre>
-<pre class="r"><code>#Six Hour Exposure Means
-HTAC.pH.mean.T6 &lt;- mean(na.omit(tank.pH.data$Tank4, tank.pH.data$Tank6, tank.pH.data$Tank9)) #range of average ambient pH levels
-HTAC.pH.mean.T6</code></pre>
-<pre><code>## [1] NaN</code></pre>
-<pre class="r"><code>ATAC.pH.mean.T6 &lt;- mean(na.omit(tank.pH.data$Tank11, tank.pH.data$Tank14, tank.pH.data$Tank15)) #range of average ambient pH levels
-ATAC.pH.mean.T6</code></pre>
-<pre><code>## [1] 7.9812</code></pre>
-<pre class="r"><code>ATHC.pH.mean.T6 &lt;- mean(na.omit(tank.pH.data$Tank12, tank.pH.data$Tank13, tank.pH.data$Tank16)) #range of average ambient pH levels
-ATHC.pH.mean.T6 </code></pre>
-<pre><code>## [1] 7.7088</code></pre>
+HTAC.pH.mean.T1 &lt;- round(mean(na.omit(tank.pH.data$Tank4[1:5],tank.pH.data$Tank6[1:5], tank.pH.data$Tank9[1:5])), digits=3)
+HTAC.pH.se.T1 &lt;-round(sd(na.omit(tank.pH.data$Tank4[1:5],tank.pH.data$Tank6[1:5], tank.pH.data$Tank9[1:5]))/sqrt(length(na.omit(tank.pH.data$Tank4[1:5],tank.pH.data$Tank6[1:5], tank.pH.data$Tank9[1:5]))), digits=3)
+
+ATAC.pH.mean.T1 &lt;- round(mean(na.omit(tank.pH.data$Tank11[1:5], tank.pH.data$Tank14[1:5], tank.pH.data$Tank15[1:5])), digits=3) 
+ATAC.pH.se.T1 &lt;-round(sd(na.omit(tank.pH.data$Tank11[1:5], tank.pH.data$Tank14[1:5], tank.pH.data$Tank15[1:5]))/sqrt(length(na.omit(tank.pH.data$Tank11[1:5], tank.pH.data$Tank14[1:5], tank.pH.data$Tank15[1:5]))), digits=3)
+
+ATHC.pH.mean.T1 &lt;- round(mean(na.omit(tank.pH.data$Tank12[1:5], tank.pH.data$Tank13[1:5], tank.pH.data$Tank16[1:5])), digits=3)
+ATHC.pH.se.T1 &lt;-round(sd(na.omit(tank.pH.data$Tank12[1:5], tank.pH.data$Tank13[1:5], tank.pH.data$Tank16[1:5]))/sqrt(length(na.omit(tank.pH.data$Tank12[1:5], tank.pH.data$Tank13[1:5], tank.pH.data$Tank16[1:5]))), digits=3)
+
+#Six Hour Exposure Means
+HTAC.pH.mean.T6 &lt;- round(mean(na.omit(tank.pH.data$Tank4, tank.pH.data$Tank6, tank.pH.data$Tank9)), digits=3)
+HTAC.pH.se.T6 &lt;-round(sd(na.omit(tank.pH.data$Tank4, tank.pH.data$Tank6, tank.pH.data$Tank9))/sqrt(length(na.omit(tank.pH.data$Tank4, tank.pH.data$Tank6, tank.pH.data$Tank9))), digits=3)
+
+ATAC.pH.mean.T6 &lt;- round(mean(na.omit(tank.pH.data$Tank11, tank.pH.data$Tank14, tank.pH.data$Tank15)), digits=3) 
+ATAC.pH.se.T6 &lt;-round(sd(na.omit(tank.pH.data$Tank11, tank.pH.data$Tank14, tank.pH.data$Tank15))/sqrt(length(na.omit(tank.pH.data$Tank11, tank.pH.data$Tank14, tank.pH.data$Tank15))), digits=3)
+
+ATHC.pH.mean.T6 &lt;- round(mean(na.omit(tank.pH.data$Tank12, tank.pH.data$Tank13, tank.pH.data$Tank16)), digits=3) 
+ATHC.pH.se.T6 &lt;-round(sd(na.omit(tank.pH.data$Tank12, tank.pH.data$Tank13, tank.pH.data$Tank16))/sqrt(length(na.omit(tank.pH.data$Tank12, tank.pH.data$Tank13, tank.pH.data$Tank16))), digits=3)
+
+Exposure.pH.Mean.T1 &lt;- rbind(ATAC.pH.mean.T1, ATHC.pH.mean.T1, HTAC.pH.mean.T1)
+Exposure.pH.SE.T1 &lt;- rbind(ATAC.pH.se.T1, ATHC.pH.se.T1, HTAC.pH.se.T1)
+Exposure.pH.Mean.T6 &lt;- rbind(ATAC.pH.mean.T6, ATHC.pH.mean.T6, HTAC.pH.mean.T6)
+Exposure.pH.SE.T6 &lt;- rbind(ATAC.pH.se.T6, ATHC.pH.se.T6, HTAC.pH.se.T6)
+
+Exp.pH.Table &lt;- cbind(Exposure.pH.Mean.T1,Exposure.pH.SE.T1,Exposure.pH.Mean.T6,Exposure.pH.SE.T6)
+colnames(Exp.pH.Table) &lt;- c(&quot;T1.pH.Mean&quot;, &quot;T1.pH.SEM&quot;,&quot;T6.pH.Mean&quot;, &quot;T6.pH.SEM&quot;)
+rownames(Exp.pH.Table) &lt;- c(&quot;ATAC&quot;, &quot;ATHC&quot;, &quot;HTAC&quot;)
+write.csv(Exp.pH.Table, &quot;~/MyProjects/Montipora_Acute_Exp/RAnalysis/Output/Exposure_Conditions_pH_2016030.csv&quot;)
+
+# Exposure pH Means NBS
+Exp.pH.Table</code></pre>
+<pre><code>##      T1.pH.Mean T1.pH.SEM T6.pH.Mean T6.pH.SEM
+## ATAC      7.922     0.002      7.981     0.011
+## ATHC      7.652     0.002      7.709     0.010
+## HTAC        NaN        NA        NaN        NA</code></pre>
 <pre class="r"><code>#Plotting Figures
 T1s &lt;- strptime(&quot;2016-06-30 06:30:00&quot;, &quot;%Y-%m-%d %H:%M:%S&quot;)
 T1e &lt;- strptime(&quot;2016-06-30 07:30:00&quot;, &quot;%Y-%m-%d %H:%M:%S&quot;)
